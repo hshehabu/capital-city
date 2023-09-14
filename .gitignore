@@ -1,0 +1,90 @@
+# Node.js
+node_modules/
+
+# Logs
+logs
+*.log
+
+# Dependency directories
+pids
+*.pid
+*.seed
+*.pid.lock
+
+
+# Editor directories and files
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# Environment configuration
+.env
+.env.local
+.env.*.local
+
+# Production build output
+/build
+
+# Coverage directory
+/coverage
+
+# Yarn
+.yarn
+.yarn/
+.yarn-integrity
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Bower dependency directory (https://bower.io/)
+bower_components/
+
+# Dependencies installed via Composer (https://getcomposer.org/)
+vendor/
+
+# Compiled Python files
+*.pyc
+
+# Compiled TypeScript files
+*.tsbuildinfo
+
+# vscode settings folder
+.vscode/
+
+# Local .env files
+.env.local
+
+# Log files
+logs/
+*.log
+
+# Output of npm pack
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# IDE-specific files
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Compiled Output
+dist/
+build/
+out/

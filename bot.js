@@ -1,11 +1,11 @@
 require('dotenv').config();
-const TelegramBot = require('node-telegram-bot-api');
-const bot = new TelegramBot(process.env.TELEGRAM_BOT_API_TOKEN, { polling: true });
+const { Telegraf, Markup, Scenes, session} = require('telegraf');
+const bot = new Telegraf(process.env.TELEGRAM_BOT_API_TOKEN);
 const axios = require('axios');
 const commands = require('./commands')
 
-bot.setMyCommands(commands)
-
+bot.telegram.setMyCommands(commands)
+bot.use(session());
  
 async function getCapitalCity(country) {
   try {
@@ -24,30 +24,67 @@ async function getCapitalCity(country) {
   }
 }
 
-bot.onText(/\/start/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, 'Welcome to the bot! Use /capital look for capital.');
-});
+const capitalWizard = new Scenes.WizardScene('capital_wizard',
+(ctx)=>{
+  ctx.reply('Enter the country')
+  ctx.wizard.next()
+},
+async (ctx)=> {
+  const country = ctx.message.text;
+  await getCapitalCity(country).then((capital)=>{
 
-bot.onText(/\/capital/, (msg) => {
-  const chatId = msg.chat.id;
-  bot.sendMessage(chatId, 'Enter the country').then(() => {
-    bot.on('text', async (msg) => {
-      const country = msg.text;
-      try {
-          const capitalCity = await getCapitalCity(country);
-          bot.sendMessage(chatId, `The capital city of ${country} is: ${capitalCity}`);
-          bot.sendMessage(chatId, "whose else use /capital");
-      } catch (error) {
-      
-        bot.sendMessage(chatId, 'Error fetching data : '+ error.message);
-      }
-    });
-  });
-});
+    ctx.reply(`The capital city of ${country} is: ${capital}`.toUpperCase());
+    setTimeout(()=>{
+      ctx.reply('Do you want another one?',Markup.inlineKeyboard([
+        Markup.button.callback('Yes', 'try_again'),
+        Markup.button.callback('No', 'cancel_process')
+      ]))
 
-bot.on('polling_error', (error) => {
-  console.error('Polling error:', error);
-});
+    },2000)
+    ctx.wizard.next()
+  }).catch((error)=> {
+  ctx.reply('error occurred while fetching the data. Do you want to try again?',Markup.inlineKeyboard([
+    Markup.button.callback('Yes', 'try_again'),
+    Markup.button.callback('No', 'cancel_process')
+  ]))
+  ctx.wizard.next()
+}
+  )},
+(ctx)=>{
+  if(ctx.update.callback_query){
+    const userResponse = ctx.update.callback_query.data
+    if(userResponse == 'try_again'){
+      ctx.reply('please enter another one')
+      ctx.answerCbQuery()
+      return ctx.wizard.back()
+    }else if(userResponse == 'cancel_process'){
+      ctx.reply('cancelled process')
+      ctx.answerCbQuery()
+      ctx.scene.leave()
+    }
+  }else
+  {
+    ctx.reply('invalid response use /capital ')
+    ctx.scene.leave()
+  }
+}
+)
+const stage = new Scenes.Stage([capitalWizard]);
+bot.use(stage.middleware());
 
-console.log('Bot is running and listening for messages.');
+bot.command('start' , (ctx)=>{
+  ctx.reply(`Welcome ${ctx.chat.username} to the bot! Use /capital look for capital cities.`)
+})
+bot.command('capital' , (ctx)=>{
+  ctx.scene.enter('capital_wizard')
+})
+
+bot.command('help', (ctx) => {
+  ctx.reply('using this bot you can get capital cities of any country in the world by using /capital command');
+});
+bot.on('text' , (ctx)=>{
+  ctx.reply(`here are available commands\n /capital \n /help`);
+})
+bot.launch();
+
+console.log('Bot is running...');
